@@ -22,7 +22,7 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
-        log.debug("beforeHandshake..............");
+        log.debug("过滤器:握手前..............");
         HttpSession session = getSession(request);
         if (session != null) {
             log.debug("session:{}", session.toString());
@@ -39,7 +39,7 @@ public class WebSocketHandshakeInterceptor implements HandshakeInterceptor {
 
     @Override
     public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
-
+    	log.debug("过滤器:握手后..............");
     }
 
     private HttpSession getSession(ServerHttpRequest request) {
