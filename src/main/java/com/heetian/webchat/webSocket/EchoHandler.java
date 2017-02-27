@@ -1,5 +1,6 @@
 package com.heetian.webchat.webSocket;
 
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,6 +76,7 @@ public class EchoHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         log.debug("建立链接");
+        System.out.println(new String(Base64.getDecoder().decode(session.getId().getBytes("UTF-8")),"UTF-8"));
         //在这里发现了一个从session中获取额外参数的方法，但是在前端还没找到方法可以将数据放进这个里面，如果可以将昵称放进去，那么就不用那么蛋疼的记录登录者的昵称了
         Map<String, Object> attributes = session.getAttributes();
         if (null == attributes || attributes.isEmpty()) {

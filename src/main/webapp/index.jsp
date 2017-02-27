@@ -44,6 +44,7 @@
 	</div>
 </body>
 <script src="js/jquery-3.1.1.js"></script>
+<script type="text/javascript" src="js/base64.js"></script>
 <script src="js/sockjs.js"></script>
 <script type="text/javascript" src="js/socket.js"></script>
 </html>

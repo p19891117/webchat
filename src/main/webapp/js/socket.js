@@ -18,7 +18,17 @@ $("#destType").change(function(){
 	}
 });
 var ws = null;
-var transports = [];
+var tmp = JSON.stringify({
+		username:name,
+		group:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,25,267,28,29],
+	});
+tmp = BASE64.encoder(tmp);
+tmp = tmp.replace("/","-");
+var transports = {
+	sessionId:function(){
+		return tmp;
+	}
+};
 function connect(url) {
 	var name = $('#username').val();
 	if(isNull(name)){
@@ -33,9 +43,8 @@ function connect(url) {
 	var json = JSON.stringify({
 		username:name,
 		group:groupname,
-		create:true,
+		create:true
 		});
-	var host = window.location.host;
 	if (!url) {
 		alert('Select whether to use W3C WebSocket or SockJS');
 		return;
