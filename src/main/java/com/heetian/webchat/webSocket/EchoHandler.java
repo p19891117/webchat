@@ -1,7 +1,7 @@
 package com.heetian.webchat.webSocket;
 
-import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -72,20 +72,16 @@ public class EchoHandler extends TextWebSocketHandler {
             log.error("发送异常:", e);
         }
     }
-	public TextMessage message(String content){
-		String result = DateUtils.date2String(new Date()) + " " + content;
-		log.debug("回复内容:{}", result);
-		return new TextMessage(result);
-	}
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         log.debug("建立链接");
         //在这里发现了一个从session中获取额外参数的方法，但是在前端还没找到方法可以将数据放进这个里面，如果可以将昵称放进去，那么就不用那么蛋疼的记录登录者的昵称了
         Map<String, Object> attributes = session.getAttributes();
         if (null == attributes || attributes.isEmpty()) {
-            log.debug("WebSocketSession的Attributes没有参数....");
+            if(attributes==null)
+            	attributes = new HashMap<String, Object>();
         } else {
-            attributes.forEach((key, value) -> log.debug("key:{}, value:{}", key, value));
+        	log.debug("websocekt数据域建立连接后有数据："+attributes.toString());
         }
     }
 
@@ -93,20 +89,27 @@ public class EchoHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         log.debug("关闭链接");
         WebSocketCache.me().disconnection(session.getId());
+        String username = (String) session.getAttributes().get(WebSocketExt.USERNAME);
+        TextMessage tm = message("用户["+ username + "]下线啦!");
+        WebSocketCache.me().sendAll(tm);
         if (session.isOpen()) {
-            session.sendMessage(new TextMessage(session.getId() + "下线啦!"));
+            session.sendMessage(tm);
         }
-        WebSocketCache.me().getAll().forEach(s -> {
-            try {
-                String now = DateUtils.date2String(new Date());
-                s.sendMessage(new TextMessage(now + " " + session.getId() + "下线啦!"));
-            } catch (IOException e) {
-                log.error("异常", e);
-            }
-        });
     }
-
-
+    @Override
+    public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
+        log.error("处理器，传输信息过程出错,此时关闭当前连接", exception);
+        WebSocketCache.me().disconnection(session.getId());
+        String username = (String) session.getAttributes().get(WebSocketExt.USERNAME);
+        WebSocketCache.me().sendAll(message("用户["+ username + "]异常离线!"));
+        if(session.isOpen()) 
+            session.close();
+    }
+    public TextMessage message(String content){
+		String result = DateUtils.date2String(new Date()) + " " + content;
+		log.debug("回复内容:{}", result);
+		return new TextMessage(result);
+	}
     @Override
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) {
         log.debug("handleBinaryMessage:{}", message.toString());
@@ -115,22 +118,5 @@ public class EchoHandler extends TextWebSocketHandler {
     @Override
     protected void handlePongMessage(WebSocketSession session, PongMessage message) throws Exception {
         log.debug("handlePongMessage:{}", message.toString());
-    }
-
-    @Override
-    public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-        log.error("handleTransportError:", exception);
-        WebSocketCache.me().disconnection(session.getId());
-        if(session.isOpen()) {
-            session.close();
-        }
-        WebSocketCache.me().getAll().forEach(s -> {
-            try {
-                String now = DateUtils.date2String(new Date());
-                s.sendMessage(new TextMessage(now + " " + session.getId() + "下线啦!"));
-            } catch (IOException e) {
-                log.error("异常", e);
-            }
-        });
     }
 }

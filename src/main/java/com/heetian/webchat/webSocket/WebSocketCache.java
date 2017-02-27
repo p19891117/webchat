@@ -2,8 +2,8 @@ package com.heetian.webchat.webSocket;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.socket.WebSocketMessage;
@@ -18,9 +18,9 @@ import com.heetian.webchat.exception.UserException;
  */
 public class WebSocketCache {
     private List<WebSocketGroup> cache = new ArrayList<WebSocketGroup>();
-    {	
+    /*{	
     	cache.add(new WebSocketGroup(WebSocketGroup.defaultg));
-    }
+    }*/
     private static WebSocketCache me = new WebSocketCache();
     private WebSocketCache(){}
     public static WebSocketCache me() {
@@ -32,6 +32,8 @@ public class WebSocketCache {
     		throw new GroupException("群名必须");
     	if(StringUtils.isBlank(username))
     		throw new UserException("用户名必须");
+    	session.getAttributes().put("groupName", groupName);
+    	session.getAttributes().put("username", username);
     	boolean flag = true;
     	for(WebSocketGroup group :cache){
     		if(!group.getGroupName().equals(groupName))
@@ -57,80 +59,51 @@ public class WebSocketCache {
     	return sessions;
     }
     public void disconnection(String sid){
-    	Iterator<WebSocketGroup> giter = cache.iterator();
-    	while(giter.hasNext()){
-    		WebSocketGroup wsg = giter.next();
-    		Iterator<WebSocketExt> eiter = wsg.all().iterator();
-    		while(eiter.hasNext()){
-    			WebSocketExt e = eiter.next();
-    			if(e.getSessionID().equals(sid)){
-    				eiter.remove();
-    			}
-    		}
-    	}
+    	this.cache.stream().forEach(wsg->{
+    		wsg.all().removeIf(wse->wse.getSessionID().equals(sid));
+    	});
     }
     public void disconnection(String group,String username) throws GroupException, UserException {
     	if(StringUtils.isBlank(group))
     		throw new GroupException("群名必须");
     	if(StringUtils.isBlank(username))
     		throw new UserException("用户名必须");
-    	boolean flag = true;
-    	Iterator<WebSocketGroup> giter = cache.iterator();
-    	while(giter.hasNext()){
-    		WebSocketGroup wsg = giter.next();
-    		if(!wsg.getGroupName().equals(group))
-    			continue;
-    		flag = false;
-    		Iterator<WebSocketExt> eiter = wsg.all().iterator();
-    		boolean uflag = true;
-    		while(eiter.hasNext()){
-    			WebSocketExt e = eiter.next();
-    			if(e.getUsername().equals(username)){
-    				eiter.remove();
-    				uflag = false;
-    			}
-    		}
-    		if(uflag){
-    			throw new UserException("用户名["+username+"]不存在");
-    		}
-    	}
-    	if(flag){
-    		throw new GroupException("群名["+group+"]不存在");
-    	}
+    	cache.stream().filter(wsg->wsg.getGroupName().equals(group)).forEach(wsg->{
+    		wsg.all().removeIf(wse->wse.getUsername().equals(username));
+    	});
     }
     public void sendAll(WebSocketMessage<?> message) throws IOException{
-    	for(WebSocketExt wse:getAll()){
-    		wse.sendMessage(message);
-    	}
+    	cache.stream()
+    		.flatMap(wsg->wsg.all().stream())
+    		.filter(wse->wse!=null)
+    		.forEach(wse->{wse.sendMessage(message);});
     }
     public void sendGroup(String group,WebSocketMessage<?> message) throws IOException, GroupException{
     	if(StringUtils.isBlank(group))
     		throw new GroupException("群名必须");
-    	boolean flag = true;
-    	for(WebSocketGroup wsg:cache){
-    		if(wsg.getGroupName().equals(group)){
-    			flag = false;
-    			wsg.sendGroup(message);
-    		}
-    	}
-    	if(flag){
+    	List<WebSocketGroup> wsgs = cache.stream().filter(wsg->wsg.getGroupName().equals(group)).collect(Collectors.toList());
+    	if(wsgs==null||wsgs.size()<=0){
     		throw new GroupException("群名["+group+"]不存在");
     	}
+    	WebSocketGroup wsg = wsgs.remove(0);
+    	wsg.all().stream().forEach(wse->{wse.sendMessage(message);});
     }
     public void sendUser(String username,String group,WebSocketMessage<?> message) throws IOException, GroupException, UserException{
     	if(StringUtils.isBlank(group))
     		throw new GroupException("群名必须");
     	if(StringUtils.isBlank(username))
     		throw new UserException("用户名必须");
-    	boolean flag = true;
-    	for(WebSocketGroup wsg:cache){
-    		if(wsg.getGroupName().equals(group)){
-    			flag = false;
-    			wsg.sendUser(username, message);
-    		}
-    	}
-    	if(flag){
+    	List<WebSocketGroup> wsgs = cache.stream().filter(wsg->wsg.getGroupName().equals(group)).collect(Collectors.toList());
+    	if(wsgs==null||wsgs.size()<=0){
     		throw new GroupException("群名["+group+"]不存在");
     	}
+    	WebSocketGroup wsg = wsgs.remove(0);
+    	
+    	List<WebSocketExt> wses = wsg.all().stream().filter(wse->wse.getUsername().equals(username)).collect(Collectors.toList());
+    	if(wses==null||wses.size()<=0){
+    		throw new GroupException("用户名["+username+"]不存在");
+    	}
+    	WebSocketExt wse = wses.remove(0);
+    	wse.sendMessage(message);
     }
 }
