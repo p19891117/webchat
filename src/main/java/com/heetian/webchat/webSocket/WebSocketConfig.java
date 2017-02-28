@@ -1,4 +1,4 @@
-package com.heetian.webchat.config;
+package com.heetian.webchat.webSocket;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,9 +11,6 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import org.springframework.web.socket.handler.PerConnectionWebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
-import com.heetian.webchat.webSocket.EchoHandler;
-import com.heetian.webchat.webSocket.WebSocketHandshakeInterceptor;
-
 /**
  * @author peiyu
  */
@@ -22,13 +19,13 @@ import com.heetian.webchat.webSocket.WebSocketHandshakeInterceptor;
 public class WebSocketConfig extends WebMvcConfigurerAdapter implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(echoWebSocketHandler(), "/echo"); //提供符合W3C标准的Websocket数据
-        registry.addHandler(snakeWebSocketHandler(), "/snake");
-        registry.addHandler(snakeWebSocketHandler(), "/websocket");
+        //registry.addHandler(echoWebSocketHandler(), "/echo"); //提供符合W3C标准的Websocket数据
+        //registry.addHandler(snakeWebSocketHandler(), "/snake");
+        //registry.addHandler(snakeWebSocketHandler(), "/websocket");
 
         registry.addHandler(echoWebSocketHandler(), "/sockjs/echo").addInterceptors(handshakeInterceptor()).withSockJS();//提供符合SockJS的数据
-        registry.addHandler(snakeWebSocketHandler(), "/sockjs/snake").addInterceptors(handshakeInterceptor()).withSockJS();
-        registry.addHandler(snakeWebSocketHandler(), "/sockjs/websocket").addInterceptors(handshakeInterceptor()).withSockJS();
+       // registry.addHandler(snakeWebSocketHandler(), "/sockjs/snake").addInterceptors(handshakeInterceptor()).withSockJS();
+        //registry.addHandler(snakeWebSocketHandler(), "/sockjs/websocket").addInterceptors(handshakeInterceptor()).withSockJS();
     }
 
     @Bean

@@ -1,5 +1,6 @@
 package com.heetian.webchat.webSocket;
 
+import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,7 +22,6 @@ import com.heetian.webchat.bean.Msg;
 import com.heetian.webchat.exception.GroupException;
 import com.heetian.webchat.exception.UserException;
 import com.heetian.webchat.exception.UserTypeException;
-import com.heetian.webchat.utils.DateUtils;
 
 /**
  * websocket消息处理器类
@@ -108,7 +108,8 @@ public class EchoHandler extends TextWebSocketHandler {
             session.close();
     }
     public TextMessage message(String content){
-		String result = DateUtils.date2String(new Date()) + " " + content;
+    	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm");
+		String result = sdf.format(new Date()) + " " + content;
 		log.debug("回复内容:{}", result);
 		return new TextMessage(result);
 	}
